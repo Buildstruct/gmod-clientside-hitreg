@@ -1074,12 +1074,7 @@ local function dohits(ply, hit, lc)
 			-- but it's out of my control if some other addon's bullet callback has an error
 			-- and having an error halt execution right here is really really bad
 			-- because SuppressHostEvents and LagCompensation won't be disabled
-
-			local yes, err = pcall(info.cb, ply, trace, dmginfo)
-
-			if not yes and err then
-				ErrorNoHaltWithStack(err)
-			end
+			xpcall(info.cb, ErrorNoHaltWithStack, ply, trace, dmginfo)
 		end
 
 		local vic = trace.Entity
