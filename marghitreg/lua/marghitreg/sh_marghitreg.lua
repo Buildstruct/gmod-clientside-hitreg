@@ -94,7 +94,39 @@ if tbl then
 	end
 end
 
+function CLHR.doHooks(ply, data)
+	for k, v in pairs(CLHR.hooks) do
+		if k ~= "CLHR_EntityFireBullets" then
+			if isstring(k) then
+				if v(ply, data) == false then
+					return false
+				end
+			elseif IsValid(k) then
+				if v(k, ply, data) == false then
+					return false
+				end
+			else
+				CLHR.hooks[k] = nil
+			end
+		end
+	end
+
+	if GAMEMODE.EntityFireBullets
+		and GAMEMODE:EntityFireBullets(ply, data) == false
+	then
+		return false
+	end
+end
+
+local _stop_infinite_loop
+
 CLHR.hookAdd("EntityFireBullets", "CLHR_EntityFireBullets", function(ply, data)
+	if _stop_infinite_loop and _stop_infinite_loop == FrameNumber() then
+		-- some addons do some really bizarre things that i have to work around
+		-- this prevents an infinite loop caused by "Zippy's Impact Effects" in particular
+		return
+	end
+
 	local yes, wep, fixedshotgun, cmd, lastcmd, tick
 
 	if ply == GetPredictionPlayer() and not ply:IsBot() then
@@ -211,25 +243,11 @@ CLHR.hookAdd("EntityFireBullets", "CLHR_EntityFireBullets", function(ply, data)
 		::skip::
 	end
 
-	for k, v in pairs(CLHR.hooks) do
-		if k ~= "CLHR_EntityFireBullets" then
-			if isstring(k) then
-				if v(ply, data) == false then
-					return false
-				end
-			elseif IsValid(k) then
-				if v(k, ply, data) == false then
-					return false
-				end
-			else
-				CLHR.hooks[k] = nil
-			end
-		end
-	end
+	_stop_infinite_loop = FrameNumber()
+	local _, ret = xpcall(CLHR.doHooks, ErrorNoHaltWithStack, ply, data)
+	_stop_infinite_loop = nil
 
-	if GAMEMODE.EntityFireBullets
-		and GAMEMODE:EntityFireBullets(ply, data) == false
-	then
+	if ret == false then
 		return false
 	end
 
