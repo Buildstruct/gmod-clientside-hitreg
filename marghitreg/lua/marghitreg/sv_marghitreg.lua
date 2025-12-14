@@ -1170,6 +1170,7 @@ local function newpc(mdl)
 	local pc = CreatePhysCollidesFromModel(mdl)
 
 	if not pc then
+		CLHR.PhysCollides[mdl] = false
 		return
 	end
 
@@ -1184,6 +1185,10 @@ end
 
 function CLHR.GetPhysCollides(mdl, num)
 	local pc = CLHR.PhysCollides[samepc[mdl] or mdl]
+
+	if pc == false then
+		return
+	end
 
 	if not pc then
 		pc = newpc(mdl)
